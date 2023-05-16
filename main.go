@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/nbutton23/zxcvbn-go"
 	keystorev4 "github.com/wealdtech/go-eth2-wallet-encryptor-keystorev4"
 	"golang.org/x/term"
 	"os"
@@ -85,6 +86,9 @@ func encrypt(output string, inputoutput inputoutput) error {
 	if err != nil {
 		return err
 	}
+
+	strength := zxcvbn.PasswordStrength(string(passphrase), nil)
+	fmt.Printf("\nPassword strength=%d/5, crack_time=%s", strength.Score+1, strength.CrackTimeDisplay)
 
 	fmt.Print("\nEnter passphrase again: ")
 	passphrase2, err := inputoutput.ReadPassphrase()
