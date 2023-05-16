@@ -73,7 +73,7 @@ func encrypt(output string, inputoutput inputoutput) error {
 	if _, err := os.Stat(output); err == nil {
 		return fmt.Errorf("file %s already exists", output)
 	}
-	
+
 	fmt.Print("Enter secret to encrypt: ")
 	secret, err := inputoutput.ReadSecret()
 	if err != nil {

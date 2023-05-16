@@ -12,12 +12,13 @@ go install github.com/corverroos/keycrypt
 
 Encrypt:
 ```sh
-keycrypt --cmd=encrypt -file=path/to/encrypted.json 
-# Enter secret and passphrase
+keycrypt -cmd=encrypt -file=path/to/encrypted.json 
+# Enter secret
+# Enter passphrase twice
 ```
 
 Decrypt:
 ```sh
-keycrypt --cmd=decrypt -file=path/to/encrypted.json
+keycrypt -cmd=decrypt -file=path/to/encrypted.json
 # Enter passphrase
 ```
