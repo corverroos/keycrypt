@@ -41,7 +41,13 @@ func TestRun(t *testing.T) {
 func testRun(t *testing.T, secret []byte, passphrase []byte) {
 	file := path.Join(t.TempDir(), "secret.json")
 
-	tio := testIO{secrets: [][]byte{secret, passphrase}}
+	tio := testIO{
+		secrets: [][]byte{secret},
+		passphrases: [][]byte{
+			passphrase,
+			passphrase,
+		},
+	}
 	err := run("encrypt", file, &tio)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +65,7 @@ func testRun(t *testing.T, secret []byte, passphrase []byte) {
 	}
 	t.Log(string(b))
 
-	tio = testIO{secrets: [][]byte{passphrase}}
+	tio = testIO{passphrases: [][]byte{passphrase}}
 	err = run("decrypt", file, &tio)
 	if err != nil {
 		t.Fatal(err)
@@ -73,8 +79,9 @@ func testRun(t *testing.T, secret []byte, passphrase []byte) {
 }
 
 type testIO struct {
-	secrets [][]byte
-	output  []byte
+	secrets     [][]byte
+	passphrases [][]byte
+	output      []byte
 }
 
 func (t *testIO) ReadSecret() ([]byte, error) {
@@ -86,6 +93,17 @@ func (t *testIO) ReadSecret() ([]byte, error) {
 	t.secrets = t.secrets[1:]
 
 	return secret, nil
+}
+
+func (t *testIO) ReadPassphrase() ([]byte, error) {
+	if len(t.passphrases) == 0 {
+		return nil, errors.New("no secrets")
+	}
+
+	passphrase := t.passphrases[0]
+	t.passphrases = t.passphrases[1:]
+
+	return passphrase, nil
 }
 
 func (t *testIO) WriteSecret(bytes []byte) {

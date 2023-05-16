@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -19,10 +20,15 @@ var (
 
 type inputoutput interface {
 	ReadSecret() ([]byte, error)
+	ReadPassphrase() ([]byte, error)
 	WriteSecret([]byte)
 }
 
 type stdinout struct{}
+
+func (stdinout) ReadPassphrase() ([]byte, error) {
+	return readPassphrase()
+}
 
 func (stdinout) ReadSecret() ([]byte, error) {
 	return readSecret()
@@ -64,16 +70,30 @@ func run(cmd string, file string, inputoutput inputoutput) error {
 }
 
 func encrypt(output string, inputoutput inputoutput) error {
+	if _, err := os.Stat(output); err == nil {
+		return fmt.Errorf("file %s already exists", output)
+	}
+	
 	fmt.Print("Enter secret to encrypt: ")
 	secret, err := inputoutput.ReadSecret()
 	if err != nil {
 		return err
 	}
 
-	fmt.Print("\nEnter encryption passphrase: ")
-	passphrase, err := inputoutput.ReadSecret()
+	fmt.Print("Enter encryption passphrase: ")
+	passphrase, err := inputoutput.ReadPassphrase()
 	if err != nil {
 		return err
+	}
+
+	fmt.Print("\nEnter passphrase again: ")
+	passphrase2, err := inputoutput.ReadPassphrase()
+	if err != nil {
+		return err
+	}
+
+	if !bytes.Equal(passphrase, passphrase2) {
+		return fmt.Errorf("passphrases do not match")
 	}
 
 	fmt.Printf("\nSecret length: %d, passphrase length: %d\n",
@@ -94,10 +114,6 @@ func encrypt(output string, inputoutput inputoutput) error {
 		output = output + ".json"
 	}
 
-	if _, err := os.Stat(output); err == nil {
-		return fmt.Errorf("file %s already exists", output)
-	}
-
 	fmt.Printf("Writing encrypted secret to %s\n", output)
 
 	if err = os.WriteFile(output, b, 0400); err != nil {
@@ -109,7 +125,7 @@ func encrypt(output string, inputoutput inputoutput) error {
 
 func decrypt(input string, inputoutput inputoutput) error {
 	fmt.Print("Enter encryption passphrase: ")
-	passphrase, err := inputoutput.ReadSecret()
+	passphrase, err := inputoutput.ReadPassphrase()
 	if err != nil {
 		return err
 	}
@@ -139,6 +155,15 @@ func decrypt(input string, inputoutput inputoutput) error {
 }
 
 func readSecret() ([]byte, error) {
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadBytes('\n')
+	if err != nil {
+		return nil, fmt.Errorf("read secret: %w", err)
+	}
+
+	return bytes.TrimSpace(input), nil
+}
+func readPassphrase() ([]byte, error) {
 	b, err := term.ReadPassword(syscall.Stdin)
 	if err != nil {
 		return nil, fmt.Errorf("read secret: %w", err)
