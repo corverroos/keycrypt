@@ -1,3 +1,4 @@
+// Command keycrypt encrypts and decrypts secrets using the Ethereum 2.0 wallet keystorev4 format.
 package main
 
 import (
@@ -64,7 +65,7 @@ func run(cmd string, file string, inputoutput inputoutput) error {
 			return fmt.Errorf("decrypt error: %w", err)
 		}
 	default:
-		return fmt.Errorf("unknown command %q", cmd)
+		return fmt.Errorf("unknown --cmd %q", cmd)
 	}
 
 	return nil
